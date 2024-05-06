@@ -33,16 +33,20 @@ data_filled$age <- ifelse(is.na(data_filled$age), mean(data_filled$age, na.rm = 
 # Univarite Analysis
 ```{r}
 sapply(data_clean, summary)
-histograms <- lapply(data_clean[sapply(data_clean, is.numeric)], function(x) {
-  ggplot(data_clean, aes(x)) + 
+
+# Histograms
+histograms <- lapply(names(data_clean)[sapply(data_clean, is.numeric)], function(x) {
+  ggplot(data_clean, aes_string(x)) + 
     geom_histogram(bins = 30, fill = "blue", color = "black") +
-    xlab(names(x))
+    xlab(x)
 })
 print(histograms)
-boxplots <- lapply(data_clean[sapply(data_clean, is.numeric)], function(x) {
-  ggplot(data_clean, aes(y = x)) + 
+
+# Boxplots
+boxplots <- lapply(names(data_clean)[sapply(data_clean, is.numeric)], function(x) {
+  ggplot(data_clean, aes_string(y = x)) + 
     geom_boxplot(fill = "gray", color = "black") +
-    ylab(names(x))
+    ylab(x)
 })
 print(boxplots)
 ```
