@@ -1,0 +1,78 @@
+---
+title: "Lasso Prediction Model"
+output: pdf_document
+date: "2024-05-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+insurance = read.csv("insurance.csv")
+summary(insurance)
+```
+
+
+```{r}
+sum(is.na(insurance))
+insurance_clean = na.omit(insurance)
+insurance_filled = insurance
+insurance_filled$age = ifelse(is.na(insurance_filled$age), mean(insurance_filled$age, na.rm = TRUE), insurance_filled$age)
+```
+
+
+```{r}
+library(glmnet)
+library(dplyr)
+insurance_data <- insurance %>%
+  mutate(across(c(sex, smoker, region), as.factor)) %>%
+  mutate(across(c(sex, smoker, region), as.numeric))
+x <- as.matrix(insurance_data[, -7])
+y <- insurance_data$charges
+```
+The second model trained will be a Lasso regression model. We will start by encoding the categorical varibales in order to proceed and creating x and y.
+
+
+```{r}
+set.seed(100) 
+model <- glmnet(x, y, alpha = 1)  
+cross_validation <- cv.glmnet(x, y, alpha = 1)
+lambda <- cross_validation$lambda.min
+lasso_model <- glmnet(x, y, alpha = 1, lambda = lambda)
+coef(lasso_model)
+```
+We'll be using cross validation in order to choose the optimal value for lambda and setting a seed to ensure reproducibility of the code. 
+
+
+```{r}
+set.seed(100)
+num_rows <- nrow(insurance_data)
+training_rows <- floor(0.8 * num_rows)
+training_indices <- sample(seq_len(num_rows), size = training_rows)
+training_data <- insurance_data[train_indices,]
+testing_data <- insurance_data[-train_indices,]
+x_train <- as.matrix(training_data[, -7])  
+x_test <- as.matrix(testing_data[, -7])
+y_train <- training_data$charges
+y_test <- testing_data$charges
+```
+We'll be creating training and testing datasets by randomly selecting 80% of the original dataset to be the training dataset and the remaining 20% to be the testing dataset.
+
+
+```{r}
+training_model <- glmnet(x_train, y_train, alpha = 1, lambda = lambda)
+predictions <- predict(training_model, s = lambda, newx = x_test)
+rmse <- sqrt(mean((predictions - y_test)^2))
+rsq <- cor(y_test, predictions)^2
+
+plot(y_test, predictions, main = "Charges and Predicted Charges",
+     xlab = "Charges", ylab = "Predicted Charges",
+     pch = 19, col = 'brown')
+abline(0, 1, col = "blue")
+rsq <- cor(y_test, predictions)^2
+rsq
+```
+
+We can see that there is a strong correlation between the predictors and the medical charges one will incurr.

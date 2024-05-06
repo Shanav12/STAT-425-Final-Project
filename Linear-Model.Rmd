@@ -1,0 +1,76 @@
+---
+title: "Prediction Model"
+output: html_document
+date: "2024-05-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading libraries
+```{r}
+library(ggplot2)
+```
+
+# Reading the data
+```{r}
+insurance = read.csv("insurance.csv")
+summary(insurance)
+```
+
+# Cleaning the Data
+```{r}
+sum(is.na(insurance))
+insurance_clean = na.omit(insurance)
+insurance_filled = insurance
+insurance_filled$age = ifelse(is.na(insurance_filled$age), mean(insurance_filled$age, na.rm = TRUE), insurance_filled$age)
+```
+
+# Full Model
+```{r}
+full_model = lm(charges ~ ., data = insurance_clean)
+summary(full_model)
+```
+# Variable selection using AIC 
+```{r}
+new_model <- stepAIC(full_model, direction = "both")
+summary(new_model)
+```
+
+# Compare full and reduced models via F-Test
+```{r}
+summary(new_model)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+plot(new_model)
+```
+
+
+```{r}
+set.seed(100)
+num_rows <- nrow(insurance_data)
+training_size <- floor(0.8 * num_rows)
+training_indices <- sample(seq_len(num_rows), size = training_size)
+training_data <- insurance_data[train_indices, ]
+testing_data <- insurance_data[-train_indices, ]
+```
+
+
+```{r}
+training_full_model <- lm(charges ~ ., data = training_data)
+new_training_model <- stepAIC(training_full_model, direction = "both", trace = FALSE)
+summary(new_training_model)
+```
+
+
+```{r}
+predictions <- predict(new_training_model, newdata = testing_data)
+plot(data_test$charges, predictions, main = "Charges and Predicted Charges Simple Model",
+     xlab = "Charges", ylab = "Predicted Charges", pch = 19, col = 'blue')
+abline(0, 1, col = "red") 
+rsq <- cor(testing_data$charges, predictions)^2
+rsq
+```
