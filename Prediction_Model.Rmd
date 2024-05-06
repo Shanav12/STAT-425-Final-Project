@@ -30,7 +30,7 @@ insurance_filled$age = ifelse(is.na(insurance_filled$age), mean(insurance_filled
 # Full Model
 ```{r}
 
-# We want to test the null-hypothesis that bmi is relevant to charges
+# We want to test the null-hypothesis that bmi is relevant to charges.
 
 full_model = lm(charges ~ ., data=insurance_clean)
 summary(full_model)
@@ -46,6 +46,7 @@ summary(reduced_model)
 anova(full_model, reduced_model)
 
 # P-value = 2.2e-16 < 0.05, we reject the null hypothesis, indicating that bmi is not relevant to charges
+# and choose the reduced model.
 ```
 
 ```{r}
