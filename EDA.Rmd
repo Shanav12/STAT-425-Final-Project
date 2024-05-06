@@ -1,0 +1,115 @@
+---
+title: "FINAL PROJECT"
+output: html_document
+date: "2024-05-05"
+---
+# Loading libraries
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+# Reading the data
+```{r}
+data <- read.csv("C:\\Users\\mssri\\OneDrive\\Desktop\\UIUC SEM 1\\STAT 425\\FINAL PROJECT\\insurance.csv")
+summary(data)
+```
+
+# Structure of the Data
+```{r}
+str(data)
+```
+
+# Cleaning Data
+```{r}
+sum(is.na(data))
+data_clean <- na.omit(data)
+data_filled <- data
+data_filled$age <- ifelse(is.na(data_filled$age), mean(data_filled$age, na.rm = TRUE), data_filled$age)
+```
+
+# Exploratory Data Analysis
+
+# Univarite Analysis
+```{r}
+sapply(data_clean, summary)
+histograms <- lapply(data_clean[sapply(data_clean, is.numeric)], function(x) {
+  ggplot(data_clean, aes(x)) + 
+    geom_histogram(bins = 30, fill = "blue", color = "black") +
+    xlab(names(x))
+})
+print(histograms)
+boxplots <- lapply(data_clean[sapply(data_clean, is.numeric)], function(x) {
+  ggplot(data_clean, aes(y = x)) + 
+    geom_boxplot(fill = "cyan", color = "black") +
+    ylab(names(x))
+})
+print(boxplots)
+```
+
+# Bivariate Analysis
+```{r}
+pairs(data_clean[sapply(data_clean, is.numeric)])
+cor_matrix <- cor(data_clean[sapply(data_clean, is.numeric)], use = "complete.obs")
+print(cor_matrix)
+ggplot(data_clean, aes(x = age, y = bmi)) +
+    geom_point() +
+    geom_smooth(method = "lm")
+```
+
+# Multivariate Analysis
+```{r}
+ggplot(data_clean, aes(x = age, y = sex, color = bmi)) +
+    geom_point() +
+    geom_smooth(method = lm)
+```
+
+# Categorical Data Analysis
+
+```{r}
+categorical_columns <- c('age', 'sex', 'bmi')
+data_clean[categorical_columns] <- lapply(data_clean[categorical_columns], factor)
+str(data_clean)
+factor_columns <- names(data_clean)[sapply(data_clean, is.factor)]
+print(factor_columns)
+if (length(factor_columns) == 0) {
+    cat("No factor columns available.\n")
+} else {
+    sapply(factor_columns, function(col) print(table(data_clean[[col]])))
+}
+lapply(names(data_clean)[sapply(data_clean, is.factor)], function(col_name) {
+    plot <- ggplot(data_clean, aes_string(x = col_name, fill = col_name)) +
+        geom_bar() +
+        xlab(col_name) +
+        ggtitle(paste("Distribution of", col_name)) +
+        theme_minimal()
+    print(plot)  
+})
+```
+
+# Outlier Detections
+
+# Statistical Outlier Detection
+```{r}
+Q1 <- quantile(data$age, 0.25)
+Q3 <- quantile(data$bmi, 0.75)
+IQR <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+outliers <- data %>% 
+    filter(age < lower_bound | bmi > upper_bound)
+print(outliers)
+```
+# Multivariate Outlier Detection
+
+```{r}
+library(MASS)  
+cov_matrix <- cov(data[, c("age", "bmi")])
+center <- colMeans(data[, c("age", "bmi")])
+mahalanobis_distances <- mahalanobis(data[, c("age", "bmi")], center = center, cov = cov_matrix)
+threshold <- qchisq(0.975, df = 2)  
+data$Outlier <- mahalanobis_distances > threshold
+outliers <- data %>% 
+    filter(Outlier == TRUE)
+print(outliers)
+```
