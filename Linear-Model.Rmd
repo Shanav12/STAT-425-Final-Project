@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Loading libraries
 ```{r}
 library(ggplot2)
+library(MASS)
 ```
 
 # Reading the data
@@ -51,11 +52,11 @@ plot(new_model)
 
 ```{r}
 set.seed(100)
-num_rows <- nrow(insurance_data)
+num_rows <- nrow(insurance_clean)
 training_size <- floor(0.8 * num_rows)
 training_indices <- sample(seq_len(num_rows), size = training_size)
-training_data <- insurance_data[train_indices, ]
-testing_data <- insurance_data[-train_indices, ]
+training_data <- insurance_clean[train_indices, ]
+testing_data <- insurance_clean[-train_indices, ]
 ```
 
 
