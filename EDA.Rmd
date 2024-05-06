@@ -41,7 +41,7 @@ histograms <- lapply(data_clean[sapply(data_clean, is.numeric)], function(x) {
 print(histograms)
 boxplots <- lapply(data_clean[sapply(data_clean, is.numeric)], function(x) {
   ggplot(data_clean, aes(y = x)) + 
-    geom_boxplot(fill = "cyan", color = "black") +
+    geom_boxplot(fill = "gray", color = "black") +
     ylab(names(x))
 })
 print(boxplots)
