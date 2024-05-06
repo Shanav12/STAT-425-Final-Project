@@ -11,7 +11,7 @@ library(ggplot2)
 
 # Reading the data
 ```{r}
-data <- read.csv("./insurance.csv")
+data <- read.csv("insurance.csv")
 summary(data)
 ```
 
