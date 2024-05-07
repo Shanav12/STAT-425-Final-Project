@@ -51,11 +51,11 @@ plot(new_model)
 
 ```{r}
 set.seed(100)
-num_rows <- nrow(insurance_data)
+num_rows <- nrow(insurance)
 training_size <- floor(0.8 * num_rows)
 training_indices <- sample(seq_len(num_rows), size = training_size)
-training_data <- insurance_data[training_indices, ]
-testing_data <- insurance_data[-training_indices, ]
+training_data <- insurance[training_indices, ]
+testing_data <- insurance[-training_indices, ]
 ```
 
 
