@@ -54,8 +54,8 @@ set.seed(100)
 num_rows <- nrow(insurance_data)
 training_size <- floor(0.8 * num_rows)
 training_indices <- sample(seq_len(num_rows), size = training_size)
-training_data <- insurance_data[train_indices, ]
-testing_data <- insurance_data[-train_indices, ]
+training_data <- insurance_data[training_indices, ]
+testing_data <- insurance_data[-training_indices, ]
 ```
 
 
@@ -68,9 +68,11 @@ summary(new_training_model)
 
 ```{r}
 predictions <- predict(new_training_model, newdata = testing_data)
-plot(data_test$charges, predictions, main = "Charges and Predicted Charges Simple Model",
+plot(testing_data$charges, predictions, main = "Charges and Predicted Charges Simple Model",
      xlab = "Charges", ylab = "Predicted Charges", pch = 19, col = 'blue')
 abline(0, 1, col = "red") 
 rsq <- cor(testing_data$charges, predictions)^2
-rsq
+print(rsq)
+rmse <- sqrt(mean((testing_data$charges - predictions)^2))
+print(paste("RMSE:", rmse))
 ```
