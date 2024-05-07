@@ -1,0 +1,197 @@
+---
+title: "STAT 425 Final Project"
+output: pdf_document
+date: "2024-05-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# EDA, loading libraries
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+# Reading the data
+```{r}
+data <- read.csv("insurance.csv")
+summary(data)
+```
+
+# Structure of the Data
+```{r}
+str(data)
+```
+
+# Cleaning Data
+```{r}
+sum(is.na(data))
+data_clean <- na.omit(data)
+data_filled <- data
+data_filled$age <- ifelse(is.na(data_filled$age), mean(data_filled$age, na.rm = TRUE), data_filled$age)
+```
+
+
+# Univarite Analysis
+```{r}
+sapply(data_clean, summary)
+
+# Histograms
+histograms <- lapply(names(data_clean)[sapply(data_clean, is.numeric)], function(x) {
+  ggplot(data_clean, aes_string(x)) + 
+    geom_histogram(bins = 30, fill = "blue", color = "black") +
+    xlab(x)
+})
+print(histograms)
+
+# Boxplots
+boxplots <- lapply(names(data_clean)[sapply(data_clean, is.numeric)], function(x) {
+  ggplot(data_clean, aes_string(y = x)) + 
+    geom_boxplot(fill = "gray", color = "black") +
+    ylab(x)
+})
+print(boxplots)
+```
+
+
+# Linear Regression Model Start
+```{r}
+library(ggplot2)
+```
+
+# Reading the data
+```{r}
+insurance = read.csv("insurance.csv")
+summary(insurance)
+```
+
+# Cleaning the Data
+```{r}
+sum(is.na(insurance))
+insurance_clean = na.omit(insurance)
+insurance_filled = insurance
+insurance_filled$age = ifelse(is.na(insurance_filled$age), mean(insurance_filled$age, na.rm = TRUE), insurance_filled$age)
+```
+
+# Full Model
+```{r}
+full_model = lm(charges ~ ., data = insurance_clean)
+summary(full_model)
+```
+
+# Variable selection using BIC 
+```{r}
+new_model <- step(full_model, direction = "backward", k=log(nrow(insurance_clean)))
+summary(new_model)
+```
+
+```{r}
+summary(new_model)
+```
+
+
+```{r}
+par(mfrow = c(2, 2))
+plot(new_model)
+```
+
+
+```{r}
+set.seed(100)
+num_rows <- nrow(insurance_clean)
+training_size <- floor(0.8 * num_rows)
+training_indices <- sample(seq_len(num_rows), size = training_size)
+training_data <- insurance_clean[training_indices, ]
+testing_data <- insurance_clean[-training_indices, ]
+```
+
+
+```{r}
+training_full_model <- lm(charges ~ ., data = training_data)
+new_training_model <- step(training_full_model, direction = "backward", k=log(nrow(training_data)))
+summary(new_training_model)
+```
+
+
+```{r}
+predictions <- predict(new_training_model, newdata = testing_data)
+plot(testing_data$charges, predictions, main = "Charges and Predicted Charges Simple Model",
+     xlab = "Charges", ylab = "Predicted Charges", pch = 19, col = 'blue')
+abline(0, 1, col = "red") 
+rsq <- cor(testing_data$charges, predictions)^2
+print(rsq)
+rmse <- sqrt(mean((testing_data$charges - predictions)^2))
+print(paste("RMSE:", rmse))
+```
+
+
+# Lasso Regression Model
+```{r}
+insurance = read.csv("insurance.csv")
+summary(insurance)
+```
+
+
+```{r}
+sum(is.na(insurance))
+insurance_clean = na.omit(insurance)
+insurance_filled = insurance
+insurance_filled$age = ifelse(is.na(insurance_filled$age), mean(insurance_filled$age, na.rm = TRUE), insurance_filled$age)
+```
+
+
+```{r}
+library(glmnet)
+library(dplyr)
+insurance_data <- insurance_clean %>%
+  mutate(across(c(sex, smoker, region), as.factor)) %>%
+  mutate(across(c(sex, smoker, region), as.numeric))
+x <- as.matrix(insurance_data[, -7])
+y <- insurance_data$charges
+```
+The second model trained will be a Lasso regression model. We will start by encoding the categorical varibales in order to proceed and creating x and y.
+
+
+```{r}
+set.seed(100) 
+model <- glmnet(x, y, alpha = 1)  
+cross_validation <- cv.glmnet(x, y, alpha = 1)
+lambda <- cross_validation$lambda.min
+lasso_model <- glmnet(x, y, alpha = 1, lambda = lambda)
+plot(cross_validation)
+coef(lasso_model)
+```
+We'll be using cross validation in order to choose the optimal value for lambda and setting a seed to ensure reproducibility of the code. 
+
+
+```{r}
+set.seed(100)
+num_rows <- nrow(insurance_data)
+training_rows <- floor(0.8 * num_rows)
+training_indices <- sample(seq_len(num_rows), size = training_rows)
+training_data <- insurance_data[training_indices,]
+testing_data <- insurance_data[-training_indices,]
+x_train <- as.matrix(training_data[, -7])  
+x_test <- as.matrix(testing_data[, -7])
+y_train <- training_data$charges
+y_test <- testing_data$charges
+```
+We'll be creating training and testing datasets by randomly selecting 80% of the original dataset to be the training dataset and the remaining 20% to be the testing dataset.
+
+
+```{r}
+training_model <- glmnet(x_train, y_train, alpha = 1, lambda = lambda)
+predictions <- predict(training_model, s = lambda, newx = x_test)
+plot(y_test, predictions, main = "Charges and Predicted Charges",
+     xlab = "Charges", ylab = "Predicted Charges",
+     pch = 19, col = 'brown')
+abline(0, 1, col = "blue")
+rsq <- cor(y_test, predictions)^2
+print(rsq)
+rmse <- sqrt(mean((y_test - predictions)^2))
+print(paste("RMSE:", rmse))
+```
+
+We can see that there is a strong correlation between the predictors and the medical charges one will incurr.
