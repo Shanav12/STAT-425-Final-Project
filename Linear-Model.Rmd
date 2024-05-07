@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 # Loading libraries
 ```{r}
 library(ggplot2)
-library(MASS)
 ```
 
 # Reading the data
@@ -35,7 +34,7 @@ summary(full_model)
 ```
 # Variable selection using AIC 
 ```{r}
-new_model <- stepAIC(full_model, direction = "both")
+new_model <- step(full_model, direction = "backward", k=log(nrow(insurance_clean)))
 summary(new_model)
 ```
 
@@ -52,24 +51,24 @@ plot(new_model)
 
 ```{r}
 set.seed(100)
-num_rows <- nrow(insurance_clean)
+num_rows <- nrow(insurance_data)
 training_size <- floor(0.8 * num_rows)
 training_indices <- sample(seq_len(num_rows), size = training_size)
-training_data <- insurance_clean[training_indices, ]
-testing_data <- insurance_clean[-training_indices, ]
+training_data <- insurance_data[train_indices, ]
+testing_data <- insurance_data[-train_indices, ]
 ```
 
 
 ```{r}
 training_full_model <- lm(charges ~ ., data = training_data)
-new_training_model <- stepAIC(training_full_model, direction = "both", trace = FALSE)
+new_training_model <- step(training_full_model, direction = "backward", k=log(nrow(training_data)))
 summary(new_training_model)
 ```
 
 
 ```{r}
 predictions <- predict(new_training_model, newdata = testing_data)
-plot(testing_data$charges, predictions, main = "Charges and Predicted Charges Simple Model",
+plot(data_test$charges, predictions, main = "Charges and Predicted Charges Simple Model",
      xlab = "Charges", ylab = "Predicted Charges", pch = 19, col = 'blue')
 abline(0, 1, col = "red") 
 rsq <- cor(testing_data$charges, predictions)^2
